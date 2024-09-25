@@ -1,0 +1,13 @@
+[sonarqube]
+3.88.229.167
+
+[sonarqube:vars]
+ansible_user=ubuntu
+ansible_ssh_private_key_file=/opt/vprofile-prod-key.pem
+
+[jenkins]
+18.206.175.26
+
+[jenkins:vars]
+ansible_user=ubuntu
+ansible_ssh_private_key_file=/opt/vprofile-prod-key.pem

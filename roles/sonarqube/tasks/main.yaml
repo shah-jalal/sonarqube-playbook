@@ -1,0 +1,100 @@
+
+- name: download sonarqube zip
+  become: yes
+  become_user: root
+  get_url: # latest version: 9.9.6.92038
+    url: https://binaries.sonarsource.com/Distribution/sonarqube/sonarqube-9.2.4.50792.zip
+    dest: /tmp/sonarqube.zip
+
+- name: ensure sonarqube folder
+  become: yes
+  become_user: root
+  file:
+    path: /opt/sonarqube
+    state: directory
+
+- name: create destination directory
+  file:
+    path: /tmp/sonarqube
+    state: directory
+    mode: '0755' # Optional: set permission 
+
+- name: unarchive zip file
+  become: yes
+  become_user: root
+  unarchive:
+    src: /tmp/sonarqube.zip
+    dest: /tmp/sonarqube
+    remote_src: yes
+    # creates: /tmp/sonarqube/sonarqube-9.2.4.50792/bin/sonar.sh
+
+- name: copy folder
+  become: yes
+  become_user: root
+  copy:
+    src: /tmp/sonarqube/sonarqube-9.2.4.50792/ 
+    dest: /opt/sonarqube/
+    remote_src: yes
+    # creates: /opt/sonarqube/bin/sonar.sh
+
+- name: create sonarqube group
+  become: yes
+  become_user: root
+  group:
+    name: sonarqube
+
+- name: create sonarqube user
+  become: yes
+  become_user: root
+  user:
+    name: sonarqube
+    groups:
+    - sonarqube
+    shell: /bin/bash
+    state: present
+
+- name: use sonar.properties template
+  become: yes
+  become_user: root
+  template:
+    src: sonar.properties.j2
+    dest: /opt/sonarqube/conf/sonar.properties
+    owner: sonarqube
+    group: sonarqube
+    mode: '0644'
+
+- name: use sonar.sh template
+  become: yes
+  become_user: root
+  template:
+    src: sonar.sh.j2
+    dest: /opt/sonarqube/bin/linux-x86-64/sonar.sh
+    owner: sonarqube
+    group: sonarqube
+
+- name: use sonar.init.d template
+  become: yes
+  become_user: root
+  template:
+    src: sonarqube.service.j2
+    dest: /etc/systemd/system/sonarqube.service
+    owner: root
+    group: root
+    mode: '0755'
+  
+- name: set folder permissions to sonarqube user
+  become: yes
+  become_user: root
+  file:
+    path: /opt/sonarqube
+    recurse: yes
+    owner: sonarqube
+    group: sonarqube
+
+- name: enable sonarqube service
+  become: yes
+  become_user: root
+  service:
+    name: sonarqube
+    enabled: yes
+    state: restarted

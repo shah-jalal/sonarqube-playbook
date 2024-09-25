@@ -1,0 +1,23 @@
+- name: install wget
+  apt:
+    name: wget
+    state: latest
+
+- name: install unzip
+  apt:
+    name: unzip
+    state: latest
+
+- name: install net-tools
+  apt:
+    name: net-tools
+    state: latest
+
+- name: install openjdk
+  apt:
+    name: openjdk-17-jre
+    state: present
+    update_cache: yes
+  become: yes
+  become_user: root
+  become_method: sudo

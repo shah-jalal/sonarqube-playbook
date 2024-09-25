@@ -1,0 +1,101 @@
+
+
+- name: install postgresql
+  apt:
+    name: postgresql
+    state: latest
+    update_cache: yes
+  become: yes
+  become_user: root
+  become_method: sudo
+
+- name: install postgresql-contrib
+  apt:
+    name: postgresql-contrib
+    state: latest
+    update_cache: yes
+  become: yes
+  become_user: root
+  become_method: sudo
+
+- name: set postgres service to start on boot
+  service:
+    name: postgresql
+    state: started
+    enabled: yes
+
+- name: install pip3
+  apt:
+    name: python3-pip
+    state: latest
+    update_cache: yes
+  become: yes
+  become_user: root
+  become_method: sudo
+
+- name: install psycopg2
+  pip:
+    name: psycopg2-binary
+    state: latest
+    executable: pip3
+  become: yes
+  become_user: root
+  become_method: sudo
+
+- name: change postgres network binding
+  become: yes
+  become_user: root
+  become_method: sudo
+  lineinfile:
+    path: /etc/postgresql/14/main/postgresql.conf
+    regexp: '# listen_addresses'
+    line: "listen_addresses = '*'"
+
+- name: change postgres pg hba access
+  become: yes
+  become_user: root
+  become_method: sudo
+  lineinfile:
+    path: /etc/postgresql/14/main/pg_hba.conf
+    regexp: 'host  all  all 0.0.0.0/0 md5'
+    line: 'host  all  all 0.0.0.0/0 md5'
+
+- name: start postgresql server
+  become: yes
+  become_user: root
+  become_method: sudo
+  service:
+    enabled: yes
+    name: postgresql
+    state: restarted
+
+- name: install setfacl support
+  become: yes
+  become_user: root
+  become_method: sudo
+  apt: pkg=acl
+
+- name: create new postgresql user
+  become:      true
+  become_user: postgres
+  postgresql_user:
+    name: sonarqube
+    password: sonarqube
+    state: present
+
+- name: create new postgresql database
+  become:      true
+  become_user: postgres
+  postgresql_db:
+    name: sonarqube
+    owner: sonarqube
+    template: template0
+    encoding: UTF8
+    state: present
+
+- name: exec postgresql query
+  become:      true
+  become_user: postgres
+  postgresql_query:
+    query: "GRANT ALL PRIVILEGES ON DATABASE sonarqube to sonarqube;"
+    db: sonarqube
